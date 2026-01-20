@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer components
+{
+	.hud-panel {
+		@apply relative overflow-hidden;
+	}
+
+	.hud-panel::before {
+		content: "";
+		@apply pointer-events-none absolute inset-0 opacity-20;
+		background: radial-gradient(circle at top, rgba(34,211,238,0.25), transparent 55%);
+	}
+
+	/* --- Onglets de navigation top bar --- */
+
+	.nav-pill {
+		@apply relative rounded-full px-4 py-1.5 text-[0.7rem] font-semibold tracking-wide
+			text-cyan-200/70 hover:text-cyan-100 transition-colors duration-150;
+	}
+
+	/* ÉTAT ACTIF : badge + glow */
+	.nav-pill.active {
+		@apply rounded-full border border-cyan-400/60 bg-slate-900/80 text-cyan-100;
+		box-shadow: 0 0 18px rgba(34,211,238,0.55);
+	}
+
+	/* HALO flou autour du trait bleu */
+	.nav-pill.active::before {
+		content: "";
+		position: absolute;
+		inset: -2px;               /* légèrement plus grand que le bouton */
+		border-radius: 9999px;
+		border: 1px solid rgba(34,211,238,0.45);
+		box-shadow: 0 0 25px rgba(34,211,238,0.65);
+		z-index: -1;
+	}
+
+	/* LUMIÈRE HAUTE, inspirée directement de ton bouton original */
+	.nav-pill.active::after {
+		content: "";
+		position: absolute;
+		top: -2px;          /* remonte la lumière */
+		left: 10%;
+		right: 10%;
+		height: 6px;
+		border-radius: 9999px;
+		background: linear-gradient(
+			to bottom,
+			rgba(34,211,238,0.5),
+			rgba(34,211,238,0.0)
+		);
+		filter: blur(6px);
+		z-index: -5;
+	}
+}
+
+@layer utilities {
+	.dm-scrollbar {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(34,211,238,0.55) rgba(15,23,42,0.4);
+	}
+
+	.dm-scrollbar::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	.dm-scrollbar::-webkit-scrollbar-track {
+		background: rgba(15,23,42,0.35);
+		border-left: 1px solid rgba(34,211,238,0.15);
+	}
+
+	.dm-scrollbar::-webkit-scrollbar-thumb {
+		background: rgba(34,211,238,0.35);
+		border: 1px solid rgba(34,211,238,0.35);
+		border-radius: 9999px;
+	}
+
+	/* Unread message indicator animation */
+	.unread-indicator {
+		@apply inline-flex items-center justify-center text-[0.9rem] mr-1;
+		animation: unread-pulse 2s ease-in-out infinite;
+		filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
+	}
+
+	@keyframes unread-pulse {
+		0%, 100% {
+			opacity: 1;
+			transform: scale(1) rotate(0deg);
+		}
+		50% {
+			opacity: 0.6;
+			transform: scale(1.1) rotate(180deg);
+		}
+	}
+}

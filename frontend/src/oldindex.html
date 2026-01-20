@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<meta
+	name="viewport"
+	content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+	/>
+	<title>Atlantis Control Core</title>
+	<!-- Build Tailwind : output.css sera généré dans dist/ -->
+	<link href="./output.css" rel="stylesheet" />
+	<!-- TypeScript compilé → app.js, chargé en module -->
+	<script type="module" src="app.js"></script>
+</head>
+
+<body class="h-screen bg-atlantisBg text-sky-50 antialiased">
+
+	<!-- Musique login -->
+	<audio id="audio-login" src="./public/sounds/login-theme.mp3" preload="auto" loop></audio>
+
+	<!-- Musique dashboard -->
+	<audio id="audio-dashboard" src="./public/sounds/dashboard-theme.mp3" preload="auto" loop></audio>
+
+
+	<!-- Background global : halo + grid -->
+	<div
+	class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_#22d3ee33,_transparent_55%),radial-gradient(circle_at_bottom,_#a855f733,_transparent_55%)]"
+	></div>
+	<div
+	class="pointer-events-none fixed inset-0 -z-10 opacity-25"
+	aria-hidden="true"
+	>
+	<div
+		class="h-full w-full bg-[linear-gradient(to_right,_#0f172a_1px,transparent_1px),linear-gradient(to_bottom,_#0f172a_1px,transparent_1px)] bg-[size:40px_40px]"
+	></div>
+	</div>
+
+	<!-- Conteneur principal SPA -->
+	<main class="h-full">
+	<div id="hud-root"
+		class="relative flex h-full w-full flex-col rounded-hud border border-cyan-500/40 bg-slate-950/80 shadow-hud-outer overflow-hidden backdrop-blur-md"
+	>
+
+		<!-- Fenetre de LOG -->
+		<div id="login-overlay"
+		class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl"
+		>
+
+		<!-- décor animé (scan + grille) -->
+		<div class="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true">
+			<!-- grille -->
+			<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.2)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.2)_1px,transparent_1px)] bg-[size:40px_40px]"
+			></div>
+			<!-- scan vertical sur TOUTE la hauteur -->
+			<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/30 via-transparent to-transparent animate-scan-slow"
+			></div>
+			<!-- scan horizontal sur TOUTE la largeur (décalé, autre couleur) -->
+			<div
+				class="absolute inset-y-0 w-full bg-gradient-to-r from-atlantisMauve/35 via-transparent to-transparent animate-scan-x-slow"
+			></div>
+		</div>
+
+
+		<!-- fenêtre de login -->
+		<!-- fenêtre centrale -->
+		<div
+			class="relative w-full max-w-lg rounded-2xl border border-cyan-500/60 bg-slate-950/90 p-6 shadow-hud-panel"
+		>
+			<header class="mb-4 text-center">
+			<p class="text-[0.6rem] uppercase tracking-[0.3em] text-cyan-300/80">
+				atlantis • access node
+			</p>
+			<h1 class="mt-2 text-lg font-semibold tracking-wider text-cyan-100">
+				Operator Access
+			</h1>
+			<p class="mt-1 text-xs text-cyan-200/70">
+				Choose access mode: log in or create a new operator profile.
+			</p>
+			</header>
+
+			<!-- Tabs Log in / Sign in -->
+			<div
+			class="mb-4 flex items-center justify-center gap-2 rounded-full border border-cyan-500/40 bg-slate-900/80 px-2 py-1"
+			>
+			<button
+				id="login-mode-login"
+				data-mode="login"
+				class="login-mode-tab nav-pill active"
+			>
+				Log in
+			</button>
+			<button
+				id="login-mode-signup"
+				data-mode="signup"
+				class="login-mode-tab nav-pill"
+			>
+				Sign in
+			</button>
+			</div>
+
+			<!-- zone de messages d'erreur commune -->
+			<p
+			id="login-error"
+			class="mb-2 min-h-[1.1rem] text-[0.7rem] text-rose-300/90 text-center"
+			></p>
+
+			<!-- FORMULAIRE LOG IN (email + password) -->
+			<form id="login-form" class="space-y-3">
+			<div class="space-y-1">
+				<label
+				for="login-email"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Email
+				</label>
+				<input
+				id="login-email"
+				type="email"
+				autocomplete="email"
+				class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+			</div>
+
+			<div class="space-y-1">
+				<label
+				for="login-password"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Password
+				</label>
+				<div class="relative">
+				<input
+					id="login-password"
+					type="password"
+					autocomplete="current-password"
+					class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+				<!-- bouton œil -->
+				<button
+					type="button"
+					class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200"
+					data-target="login-password"
+				>
+					<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+					<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+					</span>
+				</button>
+				</div>
+			</div>
+
+			<button
+				id="login-connect"
+				type="button"
+				class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisCyan/70 bg-atlantisCyan/20 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-atlantisCyan/30 shadow-[0_0_18px_rgba(34,211,238,0.6)]"
+			>
+				CONNECT
+			</button>
+			</form>
+
+			<!-- FORMULAIRE SIGN IN (name + email + password + confirm) -->
+			<form id="signup-form" class="mt-2 hidden space-y-3">
+			<div class="space-y-1">
+				<label
+				for="signup-name"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Name
+				</label>
+				<input
+				id="signup-name"
+				type="text"
+				autocomplete="name"
+				class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+			</div>
+
+			<div class="space-y-1">
+				<label
+				for="signup-email"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Email
+				</label>
+				<input
+				id="signup-email"
+				type="email"
+				autocomplete="email"
+				class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+			</div>
+
+			<div class="space-y-1">
+				<label
+				for="signup-password"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Password
+				</label>
+				<div class="relative">
+				<input
+					id="signup-password"
+					type="password"
+					autocomplete="new-password"
+					class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+				<button
+					type="button"
+					class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200"
+					data-target="signup-password"
+				>
+					<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+					<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+					</span>
+				</button>
+				</div>
+			</div>
+
+			<div class="space-y-1">
+				<label
+				for="signup-password-confirm"
+				class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				Confirm password
+				</label>
+				<div class="relative">
+				<input
+					id="signup-password-confirm"
+					type="password"
+					autocomplete="new-password"
+					class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+				/>
+				<button
+					type="button"
+					class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200"
+					data-target="signup-password-confirm"
+				>
+					<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+					<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+					</span>
+				</button>
+				</div>
+			</div>
+
+			<button
+				id="signup-submit"
+				type="button"
+				class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisTeal/70 bg-atlantisTeal/20 px-4 py-2 text-sm font-semibold text-teal-100 hover:bg-atlantisTeal/30 shadow-[0_0_18px_rgba(45,212,191,0.6)]"
+			>
+				SIGN IN
+			</button>
+			</form>
+
+			<footer
+			class="mt-4 flex items-center justify-between text-[0.65rem] text-cyan-300/70"
+			>
+			<span class="font-mono uppercase tracking-[0.18em]">
+				node: atlantis-core-01
+			</span>
+			<span class="font-mono text-cyan-400/90">
+				status: awaiting link
+			</span>
+			</footer>
+		</div>
+		</div>
+
+		
+		<!-- FENETRE DASHBOARD -->
+		<!-- halo interne -->
+		<div
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.2),transparent_55%)] opacity-80"
+		aria-hidden="true"
+		></div>
+
+		<!-- bandeau supérieur -->
+		<header
+		class="relative z-10 flex shrink-0 items-center justify-between border-b border-cyan-500/30 bg-slate-950/80 px-6 py-3"
+		>
+		<!-- Bloc gauche : logo / titre -->
+		<div class="flex items-center gap-4">
+			<div
+			class="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-400/70 bg-slate-900/80 shadow-hud-panel"
+			>
+			<div
+				class="h-6 w-6 rounded-sm border border-cyan-300/70 bg-gradient-to-br from-atlantisCyan/70 via-atlantisTeal/60 to-atlantisMauve/70"
+			></div>
+			</div>
+			<div class="leading-tight">
+			<p class="text-xs tracking-[0.25em] text-cyan-300/80 uppercase">
+				atlantis • core
+			</p>
+			<h1 class="text-lg font-semibold tracking-wider text-cyan-100">
+				Tournament Control Dashboard
+			</h1>
+			</div>
+		</div>
+
+		<!-- Bloc centre : navigation SPA (tabs) -->
+		<nav
+			aria-label="Navigation principale"
+			class="flex items-center gap-2 rounded-full border border-cyan-500/40 bg-slate-950/80 px-2 py-1 text-xs"
+		>
+			<button
+				data-view="dashboard"
+				class="nav-pill"
+			>
+				Dashboard
+			</button>
+
+			<button
+				data-view="tournament"
+				class="nav-pill"
+			>
+				Tournament
+			</button>
+
+			<button
+				data-view="pong"
+				class="nav-pill"
+			>
+				Pong Arena
+			</button>
+
+			<button
+				data-view="settings"
+				class="nav-pill"
+			>
+				System
+			</button>
+			</nav>
+
+		<!-- Bloc droit : user + time + status -->
+		<div class="flex items-center gap-4 text-[0.7rem]">
+			<div class="text-right leading-snug">
+			<p class="text-cyan-200/80 uppercase tracking-[0.18em]">
+				operator
+			</p>
+			<p id="hud-operator" class="font-semibold text-sky-100">
+				JOHN-ATLANTIS
+			</p>
+			</div>
+
+			<div class="h-10 w-px bg-cyan-500/40"></div>
+
+			<div class="leading-tight text-right">
+			<p class="text-cyan-200/80 uppercase tracking-[0.18em]">
+				system time
+			</p>
+			<p
+				id="hud-clock"
+				class="font-mono text-xs text-cyan-100"
+			>
+				--
+			</p>
+			</div>
+
+			<div
+			class="flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-3 py-1 shadow-[0_0_25px_rgba(52,211,153,0.6)]"
+			>
+			<span
+				class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-blink-slow"
+			></span>
+			<span class="text-[0.7rem] font-semibold text-emerald-100">
+				LINK STABLE
+			</span>
+			</div>
+		</div>
+		</header>
+
+		<!-- Corps principal -->
+		<section
+			id="view-dashboard"
+			class="relative z-10 flex-1 min-h-0 grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,2fr)_minmax(0,1.1fr)]"
+		>
+
+		<!-- Colonne gauche : profil + queue -->
+		<div class="flex min-h-0 flex-col gap-4">
+			<!-- Panel joueur -->
+			<section
+			class="hud-panel flex flex-col gap-3 rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel"
+			>
+			<div class="flex items-center justify-between">
+				<h2
+				class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200"
+				>
+				player console
+				</h2>
+				<span
+				class="rounded-full border border-cyan-400/60 bg-slate-900/80 px-2 py-0.5 text-[0.65rem] text-cyan-100"
+				>
+				status : <span id="hud-player-status">READY</span>
+				</span>
+			</div>
+
+			<div class="mt-1 flex items-center gap-3">
+				<div
+				class="flex h-14 w-14 items-center justify-center rounded-lg border border-cyan-400/60 bg-slate-900/80"
+				>
+				<div
+					class="h-9 w-9 rounded-full border border-atlantisCyan/70 bg-gradient-to-br from-atlantisCyan/70 via-atlantisTeal/70 to-atlantisMauve/70"
+				></div>
+				</div>
+
+				<div class="flex-1 text-xs leading-snug">
+				<p class="text-cyan-100 font-semibold">
+					Operator: <span id="hud-player-alias">Unknown</span>
+				</p>
+				<p class="text-cyan-200/70">
+					Elo projection:
+					<span id="hud-player-elo" class="font-mono">--</span>
+				</p>
+				<p class="text-cyan-400/80">
+					Lobby: <span id="hud-player-lobby">PONG-ATLANTIS-01</span>
+				</p>
+				</div>
+			</div>
+
+			<div class="mt-2 grid grid-cols-3 gap-2 text-[0.65rem]">
+				<div
+				class="rounded-md border border-cyan-500/40 bg-slate-900/80 px-2 py-1"
+				>
+				<p class="text-cyan-300/80 uppercase tracking-[0.16em]">
+					matches
+				</p>
+				<p
+					id="hud-stat-matches"
+					class="mt-1 font-mono text-sm text-cyan-100"
+				>
+					0
+				</p>
+				</div>
+				<div
+				class="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2 py-1"
+				>
+				<p class="text-emerald-300/80 uppercase tracking-[0.16em]">
+					win rate
+				</p>
+				<p
+					id="hud-stat-winrate"
+					class="mt-1 font-mono text-sm text-emerald-100"
+				>
+					0%
+				</p>
+				</div>
+				<div
+				class="rounded-md border border-atlantisMauve/50 bg-slate-900/80 px-2 py-1"
+				>
+				<p class="text-atlantisMauve/80 uppercase tracking-[0.16em]">
+					streak
+				</p>
+				<p
+					id="hud-stat-streak"
+					class="mt-1 font-mono text-sm text-atlantisMauve/90"
+				>
+					0
+				</p>
+				</div>
+			</div>
+			</section>
+
+			<!-- Panel file d'attente -->
+			<section
+			class="hud-panel flex flex-1 flex-col rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel"
+			>
+			<header
+				class="flex items-center justify-between text-xs uppercase tracking-[0.18em]"
+			>
+				<h2 class="font-semibold text-cyan-200">
+				tournament queue
+				</h2>
+				<span class="text-cyan-400/80">auto-matchmaking</span>
+			</header>
+
+			<div
+				class="mt-3 flex-1 space-y-2 overflow-hidden text-[0.7rem]"
+			>
+				<div class="flex items-center justify-between">
+				<span class="text-cyan-100">Queue size</span>
+				<span
+					id="hud-queue-size"
+					class="font-mono text-emerald-300"
+				>
+					0
+				</span>
+				</div>
+				<div class="flex items-center justify-between">
+				<span class="text-cyan-100">Estimated wait</span>
+				<span
+					id="hud-queue-wait"
+					class="font-mono text-cyan-200"
+				>
+					--
+				</span>
+				</div>
+
+				<div class="mt-3 h-px bg-cyan-500/30"></div>
+
+				<ul
+				id="hud-queue-list"
+				class="mt-2 space-y-1 overflow-y-auto pr-1"
+				aria-label="Joueurs en attente"
+				>
+				<!-- rempli par app.ts -->
+				</ul>
+			</div>
+
+			<footer class="mt-3 flex gap-2 text-[0.7rem]">
+				<button
+				id="btn-join-queue"
+				class="flex-1 rounded-md border border-atlantisTeal/70 bg-atlantisTeal/20 px-3 py-1 font-semibold text-teal-100 hover:bg-atlantisTeal/30"
+				>
+				Join queue
+				</button>
+				<button
+				id="btn-leave-queue"
+				class="flex-1 rounded-md border border-rose-500/70 bg-rose-900/40 px-3 py-1 font-semibold text-rose-100 hover:bg-rose-900/70"
+				>
+				Leave
+				</button>
+			</footer>
+			</section>
+		</div>
+
+		<!-- Colonne centrale : zone Pong / HUD -->
+		<section
+			class="hud-panel relative flex min-h-0 flex-col gap-3 rounded-xl border border-cyan-500/50 bg-slate-950/90 p-4 shadow-hud-panel"
+		>
+			<header class="flex items-center justify-between text-xs">
+			<div class="flex items-center gap-2">
+				<h2
+				class="uppercase tracking-[0.2em] text-cyan-200 font-semibold"
+				>
+				atlantis main arena
+				</h2>
+				<span
+				class="rounded-full border border-cyan-400/60 bg-slate-900/80 px-2 py-0.5 text-[0.6rem] text-cyan-200"
+				>
+				PONG VIEWPORT
+				</span>
+			</div>
+			<div class="flex items-center gap-3 text-[0.65rem]">
+				<span class="font-mono text-cyan-200/80">
+				latency: <span id="hud-latency">-- ms</span>
+				</span>
+				<span class="font-mono text-cyan-200/80">
+				tick: <span id="hud-tick">0</span>
+				</span>
+			</div>
+			</header>
+
+			<div
+			class="relative flex-1 overflow-hidden rounded-lg border border-cyan-500/40 bg-gradient-to-b from-slate-900/90 via-slate-950 to-black"
+			>
+			<!-- balayage radar -->
+			<div
+				class="pointer-events-none absolute inset-0 opacity-40"
+				aria-hidden="true"
+			>
+				<div
+				class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/40 via-transparent to-transparent animate-scan-slow"
+				></div>
+			</div>
+
+			<!-- lignes HUD type “terrain” -->
+			<div
+				class="pointer-events-none absolute inset-0 opacity-40"
+				aria-hidden="true"
+			>
+				<div
+				class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.25)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.25)_1px,transparent_1px)] bg-[size:32px_32px]"
+				></div>
+			</div>
+
+			<!-- Game Rendering -->
+			<!--<div id="pong-rendering" class="relative z-10 flex h-full items-center justify-center"></div> -->
+			<div id="game-root" class="relative w-full h-full"> </div>
+
+
+
+
+<!--
+				<div id="pong-rendering" class="absolute inset-0"></div>
+				<div id="pong-ui" class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+					<div class="flex flex-col items-center gap-6 rounded-2xl border border-cyan-500/40 bg-slate-950/80 px-8 py-6 shadow-lg">
+						<!-- Titre du menu 
+						<h1 class="text-3xl font-bold text-cyan-200 mb-4">Main Menu</h1>
+
+						<!-- Boutons du menu 
+						<nav aria-label="MainMenu" class="flex flex-col items-center gap-4 w-full">
+							<button id="btn-play" class="nav-pill w-48 text-lg">PLAY</button>
+							<button id="btn-settings" class="nav-pill w-48 text-lg">SETTINGS</button>
+							<button id="btn-tournament" class="nav-pill w-48 text-lg">TOURNAMENT</button>
+							<button id="btn-quit" class="nav-pill w-48 text-lg">QUIT</button>
+						</nav>
+					</div>
+				</div>
+			</div>
+			<!-- bandeau bas : résumé match -->
+			<footer
+			class="grid grid-cols-3 gap-3 text-[0.7rem] text-cyan-100"
+			>
+			<div
+				class="rounded-lg border border-cyan-500/40 bg-slate-950/80 px-3 py-2"
+			>
+				<p
+				class="text-[0.6rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				next match
+				</p>
+				<p id="hud-next-match" class="mt-1 font-mono">
+				--
+				</p>
+			</div>
+			<div
+				class="rounded-lg border border-cyan-500/40 bg-slate-950/80 px-3 py-2"
+			>
+				<p
+				class="text-[0.6rem] uppercase tracking-[0.18em] text-cyan-300/80"
+				>
+				mode
+				</p>
+				<p id="hud-mode" class="mt-1 font-mono">Standard 1v1</p>
+			</div>
+			<div
+				class="rounded-lg border border-atlantisMauve/60 bg-slate-950/80 px-3 py-2"
+			>
+				<p
+				class="text-[0.6rem] uppercase tracking-[0.18em] text-atlantisMauve/90"
+				>
+				blockchain
+				</p>
+				<p id="hud-chain" class="mt-1 font-mono">
+				scores: local only
+				</p>
+			</div>
+			</footer>
+		</section>
+
+		<!-- Colonne droite : système / logs -->
+		<aside class="flex min-h-0 flex-col gap-4">
+			<section
+			class="hud-panel rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel"
+			>
+			<header
+				class="flex items-center justify-between text-xs uppercase tracking-[0.18em]"
+			>
+				<h2 class="font-semibold text-cyan-200">
+				system status
+				</h2>
+				<span id="hud-node-status" class="text-emerald-300">
+				OK
+				</span>
+			</header>
+
+			<ul
+				class="mt-3 space-y-2 text-[0.7rem] font-mono text-cyan-100"
+			>
+				<li class="flex justify-between">
+				<span>API-GATEWAY</span>
+				<span id="hud-api-status" class="text-emerald-300">
+					ONLINE
+				</span>
+				</li>
+				<li class="flex justify-between">
+				<span>AUTH-SERVICE</span>
+				<span id="hud-auth-status" class="text-emerald-300">
+					ONLINE
+				</span>
+				</li>
+				<li class="flex justify-between">
+				<span>DBWRITER</span>
+				<span id="hud-db-status" class="text-emerald-300">
+					ONLINE
+				</span>
+				</li>
+				<li class="flex justify-between">
+				<span>BLOCKCHAIN</span>
+				<span id="hud-bc-status" class="text-yellow-300">
+					TESTNET
+				</span>
+				</li>
+			</ul>
+			</section>
+
+			<section
+			class="hud-panel flex-1 rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel"
+			>
+			<header
+				class="flex items-center justify-between text-xs uppercase tracking-[0.18em]"
+			>
+				<h2 class="font-semibold text-cyan-200">
+				event log
+				</h2>
+				<span class="text-cyan-400/80">last 10</span>
+			</header>
+
+			<div
+				id="hud-log"
+				class="mt-3 h-full overflow-y-auto pr-1 text-[0.7rem] font-mono text-cyan-100"
+			>
+				<!-- lignes de log ajoutées par app.ts -->
+			</div>
+			</section>
+		</aside>
+		</section>
+
+		<!-- Placeholder autres vues SPA (tournament, pong, settings) -->
+		<section
+		id="view-tournament"
+		class="hidden flex flex-col gap-4 h-full p-4 overflow-hidden"
+		>
+			<!-- Panel top : player registration -->
+			<div class="hud-panel rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel shrink-0">
+				<h2 class="text-xs uppercase tracking-[0.2em] text-cyan-200 font-semibold">Tournament Setup</h2>
+
+				<div class="mt-3 flex gap-3">
+				<input
+					id="tournament-alias-input"
+					type="text"
+					placeholder="Enter alias"
+					class="flex-1 rounded-md bg-slate-900/80 border border-cyan-500/40 px-3 py-1 text-cyan-100 text-sm"
+				/>
+				<button	id="tournament-add-player"
+					class="rounded-md border border-atlantisTeal/70 bg-atlantisTeal/20 px-4 py-1 text-teal-100 font-semibold text-sm hover:bg-atlantisTeal/30"
+				>
+					Add Player
+				</button>
+				</div>
+
+				<ul id="tournament-player-list" class="mt-3 space-y-1 text-sm text-cyan-100 max-h-28 overflow-y-auto pr-1">
+				<!-- joueurs ajoutés -->
+				</ul>
+
+				<div class="mt-3 flex justify-end">
+				<button	id="tournament-start"
+					class="rounded-lg border border-cyan-400/60 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-slate-900/60 disabled:opacity-30"
+					disabled
+				>
+					Start Tournament
+				</button>
+				</div>
+			</div>
+
+			<!-- Middle panels -->
+			<div class="flex-1 grid grid-cols-3 gap-4 min-h-0">
+				
+				<!-- Current match -->
+				<div class="hud-panel rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel flex flex-col">
+				<h2 class="text-xs uppercase tracking-[0.2em] text-cyan-200 font-semibold">Current Match</h2>
+				<div id="tournament-current-match" class="flex-1 flex items-center justify-center text-cyan-100 text-sm">
+					No match yet.
+				</div>
+				</div>
+
+				<!-- Next match -->
+				<div class="hud-panel rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel flex flex-col">
+				<h2 class="text-xs uppercase tracking-[0.2em] text-cyan-200 font-semibold">Next Match</h2>
+				<div id="tournament-next-match" class="flex-1 flex items-center justify-center text-cyan-100 text-sm">
+					--
+				</div>
+				</div>
+
+				<!-- Match list -->
+				<div class="hud-panel rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel flex flex-col min-h-0">
+				<h2 class="text-xs uppercase tracking-[0.2em] text-cyan-200 font-semibold">Match Schedule</h2>
+
+				<ul
+					id="tournament-match-list"
+					class="mt-3 space-y-1 text-sm text-cyan-100 overflow-y-auto pr-1 flex-1"
+				>
+					<!-- matches -->
+				</ul>
+
+				<button
+					id="tournament-advance"
+					class="mt-3 rounded-md border border-atlantisCyan/70 bg-atlantisCyan/20 px-4 py-1 text-cyan-100 font-semibold text-sm hover:bg-atlantisCyan/30"
+				>
+					Advance Match
+				</button>
+				</div>
+
+			</div>
+		</section>
+
+		<section
+		id="view-pong"
+		class="view-hidden absolute inset-[3rem_0_0_0] hidden p-4"
+		>
+		<!-- On remplira plus tard -->
+		</section>
+
+		<section
+		id="view-settings"
+		class="view-hidden absolute inset-[3rem_0_0_0] hidden p-4"
+		>
+		<!-- On remplira plus tard -->
+		</section>
+	</div>
+	</main>
+</body>
+</html>
+
+
+
+
+<!--  <!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Test Tailwind</title>
+	<link href="./output.css" rel="stylesheet">
+	<script type="module" src="app.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+		<div class="flex flex-wrap justify-center gap-6">
+			<div class="w-screen flex justify-between items-center gap-6">
+				
+				<h1 class="relative left-[20px] left top-0">score</h1>
+				<a class="relative" href="#">
+					<span class="absolute top-0 left-0 mt-1 ml-1 h-full w-full rounded bg-black"></span>
+					<span class="fold-bold relative inline-block h-full w-full rounded border-2 border-black bg-white px-3 py-1 text-base font-bold text-black transition duration-100 hover:bg-yellow-400 hover:text-gray-900">Pause</span>
+				</a>
+				<a href="#" class="relative">
+					<span class="absolute top-0 left-0 mt-1 ml-1 h-full w-full rounded bg-gray-700"></span>
+					<span class="fold-bold relative inline-block h-full w-full rounded border-2 border-black bg-black px-3 py-1 text-base font-bold text-white transition duration-100 hover:bg-gray-900 hover:text-yellow-500">Leave match</span>
+				</a>
+				<h1 class="relative right-[20px] top-0">score</h1>
+			</div>
+			<!-- pong table --
+			<div class="w-screen h-[600px] flex justify-center items-center bg-black">
+				
+			<div class="w-screen relative h-[600px]">
+				<!-- Ligne centrale --
+				<div class="absolute left-1/2 top-0 transform -translate-x-1/2 h-full w-[3px] bg-green-500 shadow-[0_0_5px_#0f0,0_0_10px_#0f0,0_0_20px_#0f0]"></div>
+
+				<!-- Ligne gauche --
+				<div class="absolute left-[20px] top-0 h-[150px] w-[4px] bg-blue-500 shadow-[0_0_5px_#00f,0_0_10px_#00f,0_0_20px_#00f]"></div>
+
+				<!-- Ligne droite --
+				<div class="absolute right-[20px] top-0 h-[150px] w-[4px] bg-red-500 shadow-[0_0_5px_#f00,0_0_10px_#f00,0_0_20px_#f00]"></div>
+			
+			</div>
+		</div>
+</body>
+</html> 
+
+-->

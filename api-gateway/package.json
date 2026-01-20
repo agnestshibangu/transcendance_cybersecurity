@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend TypeScript",
+  "main": "dist/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^20.0.0",
+    "fastify": "^5.5.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "pino-pretty": "^10.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

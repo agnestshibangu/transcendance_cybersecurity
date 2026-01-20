@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	<title>Atlantis Control Core</title>
+	<link href="./output.css" rel="stylesheet" />
+	<script type="module" src="app.js"></script>
+	<style>
+		.panel-content {
+			transition: max-height 0.3s ease, opacity 0.3s ease;
+			overflow: hidden;
+			max-height: 1000px;
+		}
+		.panel-collapsed .panel-content {
+			max-height: 0 !important;
+			opacity: 0;
+			overflow: hidden;
+		}
+		.panel-collapsed {
+			background-color: rgba(15,23,42,0.5);
+		}
+		.floating-arrow {
+			display: none;
+			position: absolute;
+			width: 24px;
+			height: 24px;
+			background-color: rgba(15,23,42,0.8);
+			color: #38bdf8;
+			border-radius: 9999px;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			font-size: 16px;
+			z-index: 40;
+		}
+		#player-console, #event-log {
+			position: absolute;
+			z-index: 35;
+			width: auto;
+			min-width: 250px;
+			max-width: 350px;
+			transition: all 0.3s ease;
+		}
+	</style>
+</head>
+
+<body class="h-screen bg-atlantisBg text-sky-50 antialiased">
+
+	<audio id="audio-login" src="./public/sounds/login-theme.mp3" preload="auto" loop></audio>
+	<audio id="audio-dashboard" src="./public/sounds/dashboard-theme.mp3" preload="auto" loop></audio>
+
+	<div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_#22d3ee33,_transparent_55%),radial-gradient(circle_at_bottom,_#a855f733,_transparent_55%)]"></div>
+	<div class="pointer-events-none fixed inset-0 -z-10 opacity-25" aria-hidden="true">
+		<div class="h-full w-full bg-[linear-gradient(to_right,_#0f172a_1px,transparent_1px),linear-gradient(to_bottom,_#0f172a_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+	</div>
+
+	<main class="h-full w-full">
+	<div id="hud-root" class="relative flex h-full w-full flex-col rounded-hud border border-cyan-500/40 bg-slate-950/80 shadow-hud-outer overflow-hidden backdrop-blur-md">
+
+		<div id="login-overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl">
+			<div class="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true">
+				<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.2)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.2)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+				<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/30 via-transparent to-transparent animate-scan-slow"></div>
+				<div class="absolute inset-y-0 w-full bg-gradient-to-r from-atlantisMauve/35 via-transparent to-transparent animate-scan-x-slow"></div>
+			</div>
+
+			<div class="relative w-full max-w-lg rounded-2xl border border-cyan-500/60 bg-slate-950/90 p-6 shadow-hud-panel">
+				<header class="mb-4 text-center">
+					<p class="text-[0.6rem] uppercase tracking-[0.3em] text-cyan-300/80">atlantis • access node</p>
+					<h1 class="mt-2 text-lg font-semibold tracking-wider text-cyan-100">Operator Access</h1>
+					<p class="mt-1 text-xs text-cyan-200/70">Choose access mode: log in or create a new operator profile.</p>
+				</header>
+
+				<div class="mb-4 flex items-center justify-center gap-2 rounded-full border border-cyan-500/40 bg-slate-900/80 px-2 py-1">
+					<button id="login-mode-login" data-mode="login" class="login-mode-tab nav-pill active">Log in</button>
+					<button id="login-mode-signup" data-mode="signup" class="login-mode-tab nav-pill">Sign in</button>
+				</div>
+
+				<p id="login-error" class="mb-2 min-h-[1.1rem] text-[0.7rem] text-rose-300/90 text-center"></p>
+
+				<form id="login-form" class="space-y-3">
+					<div class="space-y-1">
+						<label for="login-email" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Email</label>
+						<input id="login-email" type="email" autocomplete="email" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+
+					<div class="space-y-1">
+						<label for="login-password" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Password</label>
+						<div class="relative">
+							<input id="login-password" type="password" autocomplete="current-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="login-password">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+
+					<button id="login-connect" type="button" class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisCyan/70 bg-atlantisCyan/20 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-atlantisCyan/30 shadow-[0_0_18px_rgba(34,211,238,0.6)]">CONNECT</button>
+				</form>
+
+				<form id="signup-form" class="mt-2 hidden space-y-3">
+					<div class="space-y-1">
+						<label for="signup-name" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Name</label>
+						<input id="signup-name" type="text" autocomplete="name" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-email" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Email</label>
+						<input id="signup-email" type="email" autocomplete="email" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-password" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Password</label>
+						<div class="relative">
+							<input id="signup-password" type="password" autocomplete="new-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="signup-password">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-password-confirm" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Confirm password</label>
+						<div class="relative">
+							<input id="signup-password-confirm" type="password" autocomplete="new-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="signup-password-confirm">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+
+					<button id="signup-submit" type="button" class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisTeal/70 bg-atlantisTeal/20 px-4 py-2 text-sm font-semibold text-teal-100 hover:bg-atlantisTeal/30 shadow-[0_0_18px_rgba(45,212,191,0.6)]">SIGN IN</button>
+				</form>
+
+				<footer class="mt-4 flex items-center justify-between text-[0.65rem] text-cyan-300/70">
+					<span class="font-mono uppercase tracking-[0.18em]">node: atlantis-core-01</span>
+					<span class="font-mono text-cyan-400/90">status: awaiting link</span>
+				</footer>
+			</div>
+		</div>
+
+		<!-- Dashboard -->
+		<div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.2),transparent_55%)] opacity-80" aria-hidden="true"></div>
+
+		<header class="relative z-10 flex shrink-0 items-center justify-between border-b border-cyan-500/30 bg-slate-950/80 px-6 py-3">
+			<div class="flex items-center gap-4">
+				<div class="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-400/70 bg-slate-900/80 shadow-hud-panel">
+					<div class="h-6 w-6 rounded-sm border border-cyan-300/70 bg-gradient-to-br from-atlantisCyan/70 via-atlantisTeal/60 to-atlantisMauve/70"></div>
+				</div>
+				<div class="leading-tight">
+					<p class="text-xs tracking-[0.25em] text-cyan-300/80 uppercase">atlantis • core</p>
+					<h1 class="text-lg font-semibold tracking-wider text-cyan-100">Tournament Control Dashboard</h1>
+				</div>
+			</div>
+
+			<div class="flex items-center gap-4 text-[0.7rem]">
+				<div class="text-right leading-snug">
+					<p class="text-cyan-200/80 uppercase tracking-[0.18em]">operator</p>
+					<p id="hud-operator" class="font-semibold text-sky-100">JOHN-ATLANTIS</p>
+				</div>
+				<div class="h-10 w-px bg-cyan-500/40"></div>
+				<div class="leading-tight text-right">
+					<p class="text-cyan-200/80 uppercase tracking-[0.18em]">system time</p>
+					<p id="hud-clock" class="font-mono text-xs text-cyan-100">--</p>
+				</div>
+				<div class="flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-3 py-1 shadow-[0_0_25px_rgba(52,211,153,0.6)]">
+					<span class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-blink-slow"></span>
+					<span class="text-[0.7rem] font-semibold text-emerald-100">LINK STABLE</span>
+				</div>
+			</div>
+		</header>
+
+		<!-- Game area full width -->
+		<section id="view-dashboard" class="relative z-10 flex-1 min-h-0 w-full h-full">
+			<div id="game-root" class="relative w-full h-full"></div>
+
+			<!-- Player console flottant -->
+			<section id="player-console" class="hud-panel flex flex-col gap-3 rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel panel-collapsed" style="left: 10px; top: 10px;">
+				<div class="flex items-center justify-between">
+					<h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">player console</h2>
+					<div class="flex items-center gap-2">
+						<span class="rounded-full border border-cyan-400/60 bg-slate-900/80 px-2 py-0.5 text-[0.65rem] text-cyan-100">status : <span id="hud-player-status">READY</span></span>
+					</div>
+				</div>
+				<div class="panel-content mt-1">
+					<div class="flex items-center gap-3">
+						<div class="flex h-14 w-14 items-center justify-center rounded-lg border border-cyan-400/60 bg-slate-900/80">
+							<div class="h-9 w-9 rounded-full border border-atlantisCyan/70 bg-gradient-to-br from-atlantisCyan/70 via-atlantisTeal/70 to-atlantisMauve/70"></div>
+						</div>
+						<div class="flex-1 text-xs leading-snug">
+							<p class="text-cyan-100 font-semibold">Operator: <span id="hud-player-alias">Unknown</span></p>
+							<p class="text-cyan-200/70">Elo projection: <span id="hud-player-elo" class="font-mono">--</span></p>
+							<p class="text-cyan-400/80">Lobby: <span id="hud-player-lobby">PONG-ATLANTIS-01</span></p>
+						</div>
+					</div>
+
+					<div class="mt-2 grid grid-cols-3 gap-2 text-[0.65rem]">
+						<div class="rounded-md border border-cyan-500/40 bg-slate-900/80 px-2 py-1">
+							<p class="text-cyan-300/80 uppercase tracking-[0.16em]">matches</p>
+							<p id="hud-stat-matches" class="mt-1 font-mono text-sm text-cyan-100">0</p>
+						</div>
+						<div class="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2 py-1">
+							<p class="text-emerald-300/80 uppercase tracking-[0.16em]">win rate</p>
+							<p id="hud-stat-winrate" class="mt-1 font-mono text-sm text-emerald-100">0%</p>
+						</div>
+						<div class="rounded-md border border-atlantisMauve/50 bg-slate-900/80 px-2 py-1">
+							<p class="text-atlantisMauve/80 uppercase tracking-[0.16em]">streak</p>
+							<p id="hud-stat-streak" class="mt-1 font-mono text-sm text-atlantisMauve/90">0</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Event log flottant -->
+			<aside id="event-log" class="hud-panel flex-1 rounded-xl border border-cyan-500/40 bg-slate-950/80 p-4 shadow-hud-panel panel-collapsed" style="right: 10px; top: 10px;">
+				<header class="flex items-center justify-between text-xs uppercase tracking-[0.18em]">
+					<h2 class="font-semibold text-cyan-200">event log</h2>
+					<div class="flex items-center gap-2">
+						<span class="text-cyan-400/80">last 10</span>
+					</div>
+				</header>
+
+				<div class="panel-content mt-3 h-full overflow-y-auto pr-1 text-[0.7rem] font-mono text-cyan-100">
+					<div id="hud-log"></div>
+				</div>
+			</aside>
+		</section>
+	</div>
+	</main>
+
+	<script>
+		// Panels flottants
+		const playerConsole = document.getElementById('player-console');
+		const eventLog = document.getElementById('event-log');
+
+		const playerArrow = document.createElement('button');
+		playerArrow.innerHTML = '&#9660;';
+		playerArrow.className = 'floating-arrow';
+		playerArrow.style.top = '20px';
+		playerArrow.style.left = '10px';
+		document.body.appendChild(playerArrow);
+
+		const eventArrow = document.createElement('button');
+		eventArrow.innerHTML = '&#9660;';
+		eventArrow.className = 'floating-arrow';
+		eventArrow.style.top = '10px';
+		eventArrow.style.right = '10px';
+		document.body.appendChild(eventArrow);
+
+		playerArrow.addEventListener('click', () => playerConsole.classList.toggle('panel-collapsed'));
+		eventArrow.addEventListener('click', () => eventLog.classList.toggle('panel-collapsed'));
+
+		function showPanelArrows() {
+			playerArrow.style.display = 'flex';
+			eventArrow.style.display = 'flex';
+		}
+
+		document.getElementById('login-connect').addEventListener('click', () => {
+			// ton check login ici
+			document.getElementById('login-overlay').style.display = 'none';
+			showPanelArrows();
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# (debug temporaire) monter les seuils pour éviter 949110 pendant les tests
+SecAction "id:900110,phase:1,pass,nolog,t:none,\
+setvar:tx.inbound_anomaly_score_threshold=10000,\
+setvar:tx.outbound_anomaly_score_threshold=10000"
+
+# Autoriser PATCH sur /api/auth/profile
+SecRule REQUEST_URI "@rx ^/api/auth/profile(?:$|[/?])" \
+  "id:1021,phase:1,pass,nolog,setvar:'tx.allowed_methods=GET HEAD POST OPTIONS PUT PATCH'"
+
+# Optionnel: retirer 911100 seulement pour cet endpoint
+SecRule REQUEST_URI "@rx ^/api/auth/profile(?:$|[/?])" \
+  "id:200100,phase:1,pass,nolog,ctl:ruleRemoveById=911100"
+
+# pour upload avatar
+SecRule REQUEST_URI "@rx ^/api/auth/profile(?:$|[/?])" \
+  "id:200110,phase:1,pass,nolog,\
+   ctl:ruleRemoveTargetById=932235;ARGS:json.avatar_value,\
+   ctl:ruleRemoveTargetById=932260;ARGS:json.avatar_value,\
+   ctl:ruleRemoveTargetById=934170;ARGS:json.avatar_value,\
+   ctl:ruleRemoveTargetById=941130;ARGS:json.avatar_value,\
+   ctl:ruleRemoveTargetById=941170;ARGS:json.avatar_value"
+
+SecRule REQUEST_URI "@rx ^/api/auth/me/user-save(?:$|[/?])" \
+  "id:200210,phase:1,pass,nolog,ctl:ruleRemoveById=911100"
+
+SecRule REQUEST_URI "@rx ^/api/auth/me/user-save(?:$|[/?])" \
+  "id:200213,phase:1,pass,nolog,ctl:ruleRemoveById=930120"
+
+

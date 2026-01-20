@@ -1,0 +1,30 @@
+// {
+//   "compilerOptions": {
+//     "target": "ES6",
+//     "module": "ES6",
+//     "outDir": "dist",
+//     "rootDir": "src",
+//     "strict": true,
+//     "esModuleInterop": true
+//   },
+//   "include": ["src/**/*.ts"]
+// }
+
+
+{
+"compilerOptions": {
+	"target": "ES2017",
+	"module": "ES6",
+	"outDir": "dist",
+	"rootDir": "src",
+	"strict": true,
+	"esModuleInterop": true,
+
+	"lib": ["DOM", "ES2017"],
+
+	"skipLibCheck": true,       // <= IMPORTANT
+	"types": []                 // <= INTERDIT A TS DE CHARGER @types/node
+},
+"include": ["src/**/*.ts", "src/app old"],
+"exclude": ["node_modules"]
+}

@@ -1,0 +1,80 @@
+# ----------------------
+# Node / TypeScript
+# ----------------------
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# ----------------------
+# Logs
+# ----------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------------
+# Environment
+# ----------------------
+.env
+.env.local
+.env.*.local
+
+# ----------------------
+# Python Concat-Project
+# ----------------------
+concat_project.py
+codex-dump.txt
+dump.txt
+
+# ----------------------
+# SQLite / Base de données
+# ----------------------
+backend/data/
+*.sqlite
+*.sqlite3
+
+# ----------------------
+# Docker
+# ----------------------
+# Conteneurs et volumes locaux
+docker-compose.override.yml
+docker-compose.override.*.yml
+*.log
+*.pid
+*.sock
+tmp/
+
+# ----------------------
+# IDE / OS
+# ----------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Frontend spécifique
+# ----------------------
+frontend/dist/
+frontend/build/
+frontend/node_modules/
+
+# ----------------------
+# Vault creds
+# ----------------------
+reverse-proxy/certs/selfsigned.key
+
+# Vault secrets (HashiCorp Vault module, replacing .env)
+infra/vault/seed.sh
+api-gateway/creds/role_id
+api-gateway/creds/secret_id
+./secrets/
+
+# ----------------------
+#  Root secrets
+# ----------------------
+/certs/
+./.env
+certs.zip

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	<title>Atlantis Control Core</title>
+	<link href="./output.css" rel="stylesheet" />
+	<script type="module" src="app.js"></script>
+	<style>
+		/* Conteneur de boutons flottants au-dessus du popup */
+		.floating-buttons-container {
+			position: absolute;
+			top: 10px; /* au-dessus du popup */
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			gap: 10px;
+			z-index: 35;
+		}
+
+		.toggle-button {
+			width: 40px;
+			height: 40px;
+			background-color: rgba(15,23,42,0.8);
+			color: #38bdf8;
+			border-radius: 9999px;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			font-size: 18px;
+			border: none;
+			display: none;
+		}
+
+		/* Popups */
+		.floating-popup {
+			display: none;
+			position: absolute;
+			top: 60px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 320px;
+			max-height: 400px;
+			background-color: rgba(15,23,42,0.95);
+			color: #ffffff;
+			border: 1px solid #38bdf8;
+			border-radius: 12px;
+			padding: 12px;
+			z-index: 35;
+			overflow-y: auto;
+			box-shadow: 0 0 20px rgba(56,189,248,0.6);
+		}
+
+		.floating-popup header {
+			font-weight: bold;
+			text-transform: uppercase;
+			font-size: 0.7rem;
+			margin-bottom: 8px;
+			color: #38bdf8;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.floating-popup .close-popup {
+			cursor: pointer;
+			background: none;
+			border: none;
+			color: #38bdf8;
+			font-size: 1rem;
+		}
+
+		.floating-popup .popup-content {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			font-size: 0.75rem;
+			overflow-y: auto;
+			max-height: 320px; /* pour scroll */
+		}
+
+		.floating-popup .popup-content p {
+			margin: 0;
+		}
+		/* Popups génériques */
+		.floating-popup {
+			display: none;
+			position: absolute;
+			top: 60px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 320px;
+			max-height: 400px;
+			background-color: rgba(15,23,42,0.95);
+			color: #ffffff;
+			border: 1px solid #38bdf8;
+			border-radius: 12px;
+			padding: 12px;
+			z-index: 35;
+			/*backdrop-blur: 5px;*/
+			box-shadow: 0 0 20px rgba(56,189,248,0.6);
+		}
+
+		.floating-popup header {
+			font-weight: bold;
+			text-transform: uppercase;
+			font-size: 0.75rem;
+			margin-bottom: 8px;
+			color: #38bdf8;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.floating-popup .close-popup {
+			cursor: pointer;
+			background: none;
+			border: none;
+			color: #38bdf8;
+			font-size: 1rem;
+		}
+
+		.floating-popup .popup-content {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			font-size: 0.75rem;
+			overflow-y: auto;
+			max-height: 320px;
+		}
+
+		/* Player Console */
+		.console-popup .info-section {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			margin-bottom: 10px;
+		}
+
+		.console-popup .info-row {
+			display: flex;
+			justify-content: space-between;
+			color: #c0f0ff;
+		}
+
+		.console-popup .label {
+			font-weight: bold;
+			color: #38bdf8;
+		}
+
+		.console-popup .stats-section {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 6px;
+		}
+
+		.console-popup .stat-box {
+			background: rgba(15,23,42,0.6);
+			padding: 6px;
+			border-radius: 6px;
+			text-align: center;
+		}
+
+		.console-popup .stat-label {
+			display: block;
+			font-size: 0.65rem;
+			color: #a0f0ff;
+			text-transform: uppercase;
+		}
+
+		.console-popup .stat-value {
+			font-family: monospace;
+			font-size: 0.85rem;
+			color: #fff;
+		}
+
+		/* Messages */
+		.messages-popup {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.messages-popup .message {
+			display: flex;
+			gap: 6px;
+			font-size: 0.75rem;
+			padding: 4px 6px;
+			background: rgba(15,23,42,0.6);
+			border-radius: 6px;
+		}
+
+		.messages-popup .msg-time {
+			color: #38bdf8;
+			font-family: monospace;
+		}
+
+		.messages-popup .msg-text {
+			color: #fff;
+		}
+
+	</style>
+</head>
+<body class="h-screen bg-atlantisBg text-sky-50 antialiased">
+
+	<!-- <audio id="audio-login" src="./public/sounds/login-theme.mp3" preload="auto" loop></audio>
+	<audio id="audio-dashboard" src="./public/sounds/dashboard-theme.mp3" preload="auto" loop></audio> -->
+
+	<main class="h-full">
+	<div id="hud-root" class="relative flex h-full w-full flex-col rounded-hud border border-cyan-500/40 bg-slate-950/80 shadow-hud-outer overflow-hidden backdrop-blur-md">
+
+		<div id="login-overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl">
+			<div class="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true">
+				<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.2)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.2)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+				<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/30 via-transparent to-transparent animate-scan-slow"></div>
+				<div class="absolute inset-y-0 w-full bg-gradient-to-r from-atlantisMauve/35 via-transparent to-transparent animate-scan-x-slow"></div>
+			</div>
+
+			<div class="relative w-full max-w-lg rounded-2xl border border-cyan-500/60 bg-slate-950/90 p-6 shadow-hud-panel">
+				<header class="mb-4 text-center">
+					<p class="text-[0.6rem] uppercase tracking-[0.3em] text-cyan-300/80">atlantis • access node</p>
+					<h1 class="mt-2 text-lg font-semibold tracking-wider text-cyan-100">Operator Access</h1>
+					<p class="mt-1 text-xs text-cyan-200/70">Choose access mode: log in or create a new operator profile.</p>
+				</header>
+
+				<div class="mb-4 flex items-center justify-center gap-2 rounded-full border border-cyan-500/40 bg-slate-900/80 px-2 py-1">
+					<button id="login-mode-login" data-mode="login" class="login-mode-tab nav-pill active">Log in</button>
+					<button id="login-mode-signup" data-mode="signup" class="login-mode-tab nav-pill">Sign in</button>
+				</div>
+
+				<p id="login-error" class="mb-2 min-h-[1.1rem] text-[0.7rem] text-rose-300/90 text-center"></p>
+
+				<form id="login-form" class="space-y-3">
+					<div class="space-y-1">
+						<label for="login-email" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Email</label>
+						<input id="login-email" type="email" autocomplete="email" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+
+					<div class="space-y-1">
+						<label for="login-password" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Password</label>
+						<div class="relative">
+							<input id="login-password" type="password" autocomplete="current-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="login-password">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+
+					<button id="login-connect" type="button" class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisCyan/70 bg-atlantisCyan/20 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-atlantisCyan/30 shadow-[0_0_18px_rgba(34,211,238,0.6)]">CONNECT</button>
+					<div class="google-btn"></div>
+				</form>
+
+				<form id="signup-form" class="mt-2 hidden space-y-3">
+					<div class="space-y-1">
+						<label for="signup-name" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Name</label>
+						<input id="signup-name" type="text" autocomplete="name" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-email" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Email</label>
+						<input id="signup-email" type="email" autocomplete="email" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-password" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Password</label>
+						<div class="relative">
+							<input id="signup-password" type="password" autocomplete="new-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="signup-password">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+					<div class="space-y-1">
+						<label for="signup-password-confirm" class="text-[0.7rem] uppercase tracking-[0.18em] text-cyan-300/80">Confirm password</label>
+						<div class="relative">
+							<input id="signup-password-confirm" type="password" autocomplete="new-password" class="w-full rounded-md border border-cyan-500/40 bg-slate-900/80 px-3 py-2 pr-10 text-sm text-cyan-100 focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"/>
+							<button type="button" class="password-toggle absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/60 bg-slate-900/90 text-cyan-200" data-target="signup-password-confirm">
+								<span class="relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-cyan-400/80">
+									<span class="eye-pupil block h-2 w-2 rounded-full bg-cyan-300"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+
+					<button id="signup-submit" type="button" class="mt-3 flex w-full items-center justify-center rounded-lg border border-atlantisTeal/70 bg-atlantisTeal/20 px-4 py-2 text-sm font-semibold text-teal-100 hover:bg-atlantisTeal/30 shadow-[0_0_18px_rgba(45,212,191,0.6)]">SIGN IN</button>
+					<div class="google-btn"></div>
+				</form>
+
+				<footer class="mt-4 flex items-center justify-between text-[0.65rem] text-cyan-300/70">
+					<span class="font-mono uppercase tracking-[0.18em]">node: atlantis-core-01</span>
+					<span class="font-mono text-cyan-400/90">status: awaiting link</span>
+				</footer>
+			</div>
+		</div>
+
+		<!-- Dashboard -->
+		<header class="relative z-10 flex shrink-0 items-center justify-between border-b border-cyan-500/30 bg-slate-950/80 px-6 py-3">
+			<div class="flex items-center gap-4">
+				<div class="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-400/70 bg-slate-900/80 shadow-hud-panel">
+					<div class="h-6 w-6 rounded-sm border border-cyan-300/70 bg-gradient-to-br from-atlantisCyan/70 via-atlantisTeal/60 to-atlantisMauve/70"></div>
+				</div>
+				<div class="leading-tight">
+					<p class="text-xs tracking-[0.25em] text-cyan-300/80 uppercase">atlantis • core</p>
+					<h1 class="text-lg font-semibold tracking-wider text-cyan-100">42 - Transcendence</h1>
+				</div>
+			</div>
+			<div class="flex items-center gap-4 text-[0.7rem]">
+				<div class="text-right leading-snug">
+					<p class="text-cyan-200/80 uppercase tracking-[0.18em]">operator</p>
+					<p id="hud-operator" class="font-semibold text-sky-100">JOHN-ATLANTIS</p>
+				</div>
+				<div class="h-10 w-px bg-cyan-500/40"></div>
+				<div class="leading-tight text-right">
+					<p class="text-cyan-200/80 uppercase tracking-[0.18em]">system time</p>
+					<p id="hud-clock" class="font-mono text-xs text-cyan-100">--</p>
+				</div>
+				<!--<div class="flex items-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-900/40 px-3 py-1 shadow-[0_0_25px_rgba(52,211,153,0.6)]">
+					<span class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-blink-slow"></span>
+					<span class="text-[0.7rem] font-semibold text-emerald-100">LINK STABLE</span>
+				</div> -->
+			</div>
+		</header>
+
+		<!-- Boutons flottants au-dessus des popups -->
+		<div class="floating-buttons-container">
+			<button id="btn-message" class="toggle-button">📊</button>
+			<button id="btn-stats" class="toggle-button">💬</button>
+		</div>
+
+		<!-- Popups -->
+		<div id="popup-message" class="floating-popup">
+			<header>
+				Player Console
+				<button class="close-popup" onclick="document.getElementById('popup-message').style.display='none'">&times;</button>
+			</header>
+			<div class="popup-content console-popup">
+				<div class="info-section">
+					<div class="info-row"><span class="label">Operator:</span> <span id="hud-player-alias">Unknown</span></div>
+					<div class="info-row"><span class="label">Lobby:</span> <span id="hud-player-lobby">PONG-ATLANTIS-01</span></div>
+					<div class="info-row"><span class="label">Elo Projection:</span> <span id="hud-player-elo" class="font-mono">--</span></div>
+				</div>
+				<div class="stats-section">
+					<div class="stat-box">
+						<span class="stat-label">Matches</span>
+						<span class="stat-value" id="hud-stat-matches">0</span>
+					</div>
+					<div class="stat-box">
+						<span class="stat-label">Win Rate</span>
+						<span class="stat-value" id="hud-stat-winrate">0%</span>
+					</div>
+					<div class="stat-box">
+						<span class="stat-label">Streak</span>
+						<span class="stat-value" id="hud-stat-streak">0</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Messages Popup -->
+		<!-- <div id="popup-stats" class="floating-popup">
+			<header>
+				<span id="dm-title">Messages</span>
+				<button class="close-popup" onclick="document.getElementById('popup-stats').style.display='none'">&times;</button>
+			</header>
+			<div class="popup-content messages-popup" id="hud-log">
+				<div class="message">
+					<span class="msg-time">12:01</span>
+					<span class="msg-text">New match ready</span>
+				</div>
+				<div class="message">
+					<span class="msg-time">12:05</span>
+					<span class="msg-text">Player joined lobby</span>
+				</div>
+			</div>
+		</div> -->
+		<!-- DM Window -->
+		<div id="popup-stats"
+			class="hidden fixed inset-0 z-40 p-3 sm:p-4"
+			aria-hidden="true"
+		>
+			<!-- backdrop -->
+			<div id="dm-backdrop" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
+
+			<!-- panel -->
+			<section
+				class="relative mx-auto flex h-[min(86vh,640px)] w-[min(92vw,520px)] flex-col overflow-hidden
+					rounded-2xl border border-cyan-500/50 bg-slate-950/85 shadow-[0_0_35px_rgba(34,211,238,0.35)] backdrop-blur-md"
+				role="dialog"
+				aria-label="Direct Messages"
+			>
+				<!-- scan décor (comme login) -->
+				<div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+					<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.20)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.20)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+					<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/30 via-transparent to-transparent animate-scan-slow"></div>
+					<div class="absolute inset-y-0 w-full bg-gradient-to-r from-atlantisMauve/35 via-transparent to-transparent animate-scan-x-slow"></div>
+				</div>
+
+				<!-- Top bar -->
+				<header class="relative flex items-center gap-3 border-b border-cyan-500/30 bg-slate-950/70 px-3 py-2">
+					<img id="dm-avatar"
+						alt="Friend avatar"
+						class="h-9 w-9 shrink-0 rounded-xl border border-cyan-500/40 bg-slate-900 object-cover"
+						src="./public/images/avatars/default.png"
+					/>
+					<div class="min-w-0 flex-1">
+						<div class="text-[0.65rem] uppercase tracking-[0.25em] text-cyan-300/70">direct message</div>
+						<div id="dm-name" class="truncate text-sm font-semibold text-cyan-100">—</div>
+					</div>
+
+					<button id="dm-block"
+						type="button"
+						class="rounded-xl border border-rose-400/40 bg-rose-900/15 px-3 py-2 text-[0.7rem] font-semibold text-rose-100 hover:bg-rose-900/25"
+						title="Block / Unblock"
+					>
+						BLOCK
+					</button>
+
+					<button id="dm-invite"
+						type="button"
+						class="rounded-xl border border-cyan-500/40 bg-cyan-900/15 px-3 py-2 text-[0.7rem] font-semibold text-cyan-100 opacity-60"
+						title="Invite (soon)"
+						disabled
+					>
+						INVITE
+					</button>
+
+					<button id="dm-stats"
+						type="button"
+						class="rounded-xl border border-cyan-500/40 bg-cyan-900/15 px-3 py-2 text-[0.7rem] font-semibold text-cyan-100 opacity-60"
+						title="Stats (soon)"
+						disabled
+					>
+						STATS
+					</button>
+
+					<button id="dm-close"
+						type="button"
+						class="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-slate-900/60 text-cyan-200 hover:bg-slate-900"
+						aria-label="Close"
+						title="Close"
+					>
+						&times;
+					</button>
+				</header>
+
+				<!-- Messages -->
+				<div
+					id="hud-log"
+					class="relative flex-1 overflow-y-auto px-3 py-3 dm-scrollbar"
+				></div>
+
+				<!-- Composer -->
+				<footer class="relative border-t border-cyan-500/30 bg-slate-950/70 p-3">
+					<div class="flex items-center gap-2">
+						<input
+							id="dm-input"
+							type="text"
+							autocomplete="off"
+							maxlength="500"
+							placeholder="Type a message…"
+							class="w-full rounded-xl border border-cyan-500/40 bg-slate-900/70 px-3 py-2 text-sm text-cyan-100
+								focus:outline-none focus:ring-1 focus:ring-atlantisCyan/70 focus:border-atlantisCyan/70"
+						/>
+						<button
+							id="dm-send"
+							type="button"
+							class="shrink-0 rounded-xl border border-cyan-400/60 bg-cyan-900/20 px-4 py-2 text-[0.75rem] font-semibold text-cyan-100 hover:bg-cyan-900/45"
+						>
+							SEND
+						</button>
+					</div>
+				</footer>
+			</section>
+		</div>
+		<section id="view-dashboard" class="relative z-10 flex-1 min-h-0 grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,2fr)_minmax(0,1.1fr)]">
+			<section class="relative flex-1 col-span-full overflow-hidden rounded-lg border border-cyan-500/40 bg-gradient-to-b from-slate-900/90 via-slate-950 to-black transition-all duration-300">
+				<div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+					<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/40 via-transparent to-transparent animate-scan-slow"></div>
+				</div>
+				<div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+					<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.25)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.25)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+				</div>
+				<div id="game-root" class="relative w-full h-full"></div>
+			</section>
+		</section>
+
+		<!--<section id="view-dashboard" class="relative z-10 flex-1 min-h-0 grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,2fr)_minmax(0,1.1fr)]">
+			<section class="relative flex-1 overflow-hidden rounded-lg border border-cyan-500/40 bg-gradient-to-b from-slate-900/90 via-slate-950 to-black transition-all duration-300">
+				<div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+					<div class="absolute inset-x-0 h-full bg-gradient-to-b from-atlantisCyan/40 via-transparent to-transparent animate-scan-slow"></div>
+				</div>
+				<div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true">
+					<div class="h-full w-full bg-[linear-gradient(to_right,_rgba(15,118,110,0.25)_1px,transparent_1px),linear-gradient(to_bottom,_rgba(15,118,110,0.25)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+				</div>
+				<div id="game-root" class="relative w-full h-full"></div>
+			</section> -->
+		</section>
+
+	</div>
+	</main>
+
+	<script>
+		const btnMessage = document.getElementById('btn-message');
+		const btnStats = document.getElementById('btn-stats');
+		const popupMessage = document.getElementById('popup-message');
+		const popupStats = document.getElementById('popup-stats');
+
+		function showFloatingButtons() {
+			btnMessage.style.display = 'flex';
+			btnStats.style.display = 'flex';
+		}
+
+		btnMessage.addEventListener('click', () => {
+			popupMessage.style.display = popupMessage.style.display === 'flex' ? 'none' : 'flex';
+			popupStats.style.display = 'none';
+		});
+
+		btnStats.addEventListener('click', () => {
+			popupStats.style.display = popupStats.style.display === 'flex' ? 'none' : 'flex';
+			popupMessage.style.display = 'none';
+		});
+	</script>
+</body>
+</html>
