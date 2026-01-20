@@ -96,8 +96,8 @@ fi
 # # 💾 Secrets initiaux (optionnel)
 # # ============================
 
-echo "💾 Ajout de secrets initiaux..."
-echo "✅ Initialisation terminée."
+echo "Ajout de secrets initiaux"
+echo "Initialisation terminée."
 
 SECRET_PATH="secret"
 
@@ -105,7 +105,7 @@ MOUNTED=$($VAULT secrets list -format=json | grep "\"$SECRET_PATH/\"" || true)
 echo "$MOUNTED"
 
 if [ -z "$MOUNTED" ]; then
-  echo "🛠 activation du moteur KV v2 sur '$SECRET_PATH'..." 
+  echo "activation du moteur KV v2 sur '$SECRET_PATH'..." 
   $VAULT secrets enable -path="$SECRET_PATH" -version=2 kv
 else  
   echo " le moteur KV '$SECRET_PATH' est déjà activé"
