@@ -15,7 +15,7 @@ L’utilisation de Vault dans ce projet ne se limite pas au stockage des secrets
 
 
 ### Implémentation de ModSecurity et WAF :
-=========================================
+========================================================================================
 
 Dans ce projet, un Web Application Firewall (WAF) a été mis en place à l’aide de ModSecurity pour sécuriser les requêtes HTTP et HTTPS vers l’application. ModSecurity fonctionne comme une couche intermédiaire entre le client et le serveur web, inspectant chaque requête et appliquant des règles pour détecter et bloquer les comportements suspects, tels que les injections SQL, les tentatives de Cross-Site Scripting (XSS) ou d’autres attaques web courantes. L’intégration avec NGINX permet de combiner la gestion classique des requêtes HTTP avec la sécurité appliquée par le WAF, tout en maintenant une configuration centralisée et modulable.
 
