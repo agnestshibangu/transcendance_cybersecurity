@@ -1,6 +1,6 @@
 # Transcendance
 
-###Implémentation d'un manager de secrets d'application encrypté avec HashiCorp Vault :
+### Implémentation d'un manager de secrets d'application encrypté avec HashiCorp Vault :
 ====================================================================================
 
 Dans le cadre de ce projet, HashiCorp Vault a été mis en place pour gérer de manière centralisée et sécurisée l’ensemble des secrets nécessaires au fonctionnement de l’application et de son Web Application Firewall (WAF) basé sur ModSecurity. Vault est utilisé pour stocker et chiffrer des informations sensibles telles que des certificats TLS, des clés privées, des tokens et des variables d’environnement, afin de garantir qu’aucune donnée critique ne soit exposée directement dans les fichiers de configuration, les scripts ou les conteneurs de l’infrastructure. L’utilisation de Vault permet également de versionner les secrets et de conserver un historique de modifications, ce qui facilite la traçabilité et la maintenance.
