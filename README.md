@@ -14,6 +14,8 @@ En parallèle, le script lit un fichier .env central contenant toutes les variab
 L’utilisation de Vault dans ce projet ne se limite pas au stockage des secrets. Elle permet également de garantir que chaque service n’a accès qu’aux informations dont il a besoin, suivant le principe du moindre privilège. Cette architecture centralisée et automatisée facilite le déploiement et la maintenance de l’infrastructure, tout en assurant que les informations sensibles restent protégées et auditées. Dans le cadre du WAF et de ModSecurity, Vault fournit tous les certificats et clés nécessaires pour sécuriser le trafic web, ce qui permet à ModSecurity d’analyser, filtrer et journaliser les requêtes HTTP tout en chiffrant les communications. L’ensemble du processus illustre une intégration complète entre la gestion des secrets et la sécurité applicative, en garantissant à la fois automatisation, traçabilité et conformité aux bonnes pratiques de sécurité.
 
 
+
+
 ### Implémentation de ModSecurity et WAF :
 ========================================================================================
 
